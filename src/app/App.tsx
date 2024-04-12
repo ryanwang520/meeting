@@ -4,6 +4,8 @@
  * @see https://v0.dev/t/3Hszke86Sbq
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   SelectValue,
   SelectTrigger,
@@ -36,22 +38,25 @@ import {
   TableBody,
   Table,
 } from '@/components/ui/table';
+import { useReducer, useState } from 'react';
 
 const timeOptions = [1, 5, 10, 15, 20, 30, 60];
 
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Username must be at least 2 characters.',
+const topicSchema = z.object({
+  name: z.string().min(1, {
+    message: 'Please enter a topic name.',
   }),
   description: z.string(),
-  time: z.string().min(1, {
-    message: 'Username must be at least 2 characters.',
-  }),
+  time: z.string(),
 });
 
+type TopicForm = z.infer<typeof topicSchema>;
+
+type Topic = TopicForm & { uuid: string };
+
 export default function App() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<TopicForm>({
+    resolver: zodResolver(topicSchema),
     defaultValues: {
       name: '',
       time: '15',
@@ -59,11 +64,11 @@ export default function App() {
     },
   });
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+  function onSubmit(topic: z.infer<typeof topicSchema>) {
+    setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
+    form.reset();
   }
+  const [topics, setTopics] = useState<Topic[]>([]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -96,12 +101,16 @@ export default function App() {
                     name="name"
                     control={form.control}
                     render={({ field }) => (
-                      <FormItem className="flex items-baseline">
-                        <FormLabel className="w-24">Topic:</FormLabel>
-                        <FormControl>
-                          <Input placeholder="" {...field} />
-                        </FormControl>
-                        <FormMessage />
+                      <FormItem className="">
+                        <div className="flex items-baseline">
+                          <FormLabel className="w-24">Topic:</FormLabel>
+                          <div className="w-full">
+                            <FormControl>
+                              <Input placeholder="" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </div>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -168,23 +177,13 @@ export default function App() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">Topic 1</TableCell>
-                  <TableCell>30 minutes</TableCell>
-                  <TableCell />
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Topic 2</TableCell>
-                  <TableCell>15 minutes</TableCell>
-                  <TableCell />
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Topic 3</TableCell>
-                  <TableCell>15 minutes</TableCell>
-                  <TableCell>
-                    We need to decide on this www.notion.com/bigdecision
-                  </TableCell>
-                </TableRow>
+                {topics.map((topic) => (
+                  <TableRow key={topic.uuid}>
+                    <TableCell className="font-medium">{topic.name}</TableCell>
+                    <TableCell>{topic.time} minutes</TableCell>
+                    <TableCell>{topic.description}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
