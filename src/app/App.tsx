@@ -92,19 +92,29 @@ export default function App() {
   const [topics, setTopics] = useState<Topic[]>(mockTopics);
   const [status, setStatus] = useState<Status>('meeting');
 
-  return status == 'setup' ? (
-    <Prepare
-      topics={topics}
-      setTopics={setTopics}
-      startMeeting={({ participants, rate }) => {
-        // setParticipants(participants);
-        // setRate(rate)
-        console.log(participants, rate);
-        setStatus('meeting');
-      }}
-    />
-  ) : (
-    <Meeting topics={topics} />
+  return (
+    <div>
+      <h1 className="text-xl font-bold mb-4">ArcSite Meeting App</h1>
+      {status == 'setup' ? (
+        <Prepare
+          topics={topics}
+          setTopics={setTopics}
+          startMeeting={({ participants, rate }) => {
+            // setParticipants(participants);
+            // setRate(rate)
+            console.log(participants, rate);
+            setStatus('meeting');
+          }}
+        />
+      ) : (
+        <Meeting
+          goBack={() => {
+            setStatus('setup');
+          }}
+          topics={topics}
+        />
+      )}
+    </div>
   );
 }
 
@@ -134,9 +144,6 @@ function Prepare({
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-xl font-bold mb-4">
-          The ArcSite Meeting tool – setup screen
-        </h1>
         <div className="flex gap-8">
           <div className="flex-1">
             <form
@@ -295,14 +302,13 @@ function Prepare({
   );
 }
 
-function Meeting({ topics }: { topics: Topic[] }) {
+function Meeting({ topics, goBack }: { topics: Topic[]; goBack: () => void }) {
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   function renderTopicStatus(topic: Topic) {
     return 'Done';
   }
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">The ArcSite Meeting tool</h1>
       <div
         className="max-w-4xl mx-auto my-8 p-4 grid gap-4"
         style={{
@@ -367,7 +373,7 @@ function Meeting({ topics }: { topics: Topic[] }) {
             </Dialog>
 
             <div className="flex justify-center gap-4 mt-8">
-              <Button size="sm" variant="outline">
+              <Button onClick={() => goBack()} size="sm" variant="outline">
                 &lt;EDIT
               </Button>
               <Button size="sm" variant="outline">
