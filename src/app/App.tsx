@@ -1,10 +1,6 @@
 'use client';
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/3Hszke86Sbq
- * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
- */
 import { v4 as uuidv4 } from 'uuid';
+import { useCopyToClipboard } from 'react-use';
 
 import {
   Dialog,
@@ -48,9 +44,17 @@ import {
   TableBody,
   Table,
 } from '@/components/ui/table';
-import { Dispatch, SetStateAction, useReducer, useRef, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useId,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DialogClose } from '@radix-ui/react-dialog';
 
 const timeOptions = [1, 5, 10, 15, 20, 30, 60];
 
@@ -111,7 +115,7 @@ export default function App() {
           goBack={() => {
             setStatus('setup');
           }}
-          topics={topics}
+          initialTopics={topics}
         />
       )}
     </div>
@@ -302,11 +306,31 @@ function Prepare({
   );
 }
 
-function Meeting({ topics, goBack }: { topics: Topic[]; goBack: () => void }) {
-  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+type ParkingLot = {
+  name: string;
+  description: string;
+  owners: string;
+  uuid: string;
+};
+
+function Meeting({
+  initialTopics,
+  goBack,
+}: {
+  initialTopics: Topic[];
+  goBack: () => void;
+}) {
+  const [topics, setTopics] = useState<Topic[]>(initialTopics);
+  const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   function renderTopicStatus(topic: Topic) {
     return 'Done';
   }
+  const [notes, setNotes] = useState('');
+  const [_, copyToClipboard] = useCopyToClipboard();
+  const [moving, setMoving] = useState(false);
+  const [adding, setAdding] = useState(false);
+
   return (
     <div>
       <div
@@ -355,21 +379,25 @@ function Meeting({ topics, goBack }: { topics: Topic[]; goBack: () => void }) {
             </TableBody>
           </Table>
           <div className="flex-1 mt-8">
-            <Dialog>
+            <Dialog open={moving} onOpenChange={setMoving}>
               <DialogTrigger asChild>
-                <Button className="mr-2" variant="outline">
+                <Button
+                  disabled={!selectedTopicId}
+                  className="mr-2"
+                  variant="outline"
+                >
                   Move to Parking Lot
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Move to Parking Lot</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">hello</div>
-                <DialogFooter>
-                  <Button type="submit">Save changes</Button>
-                </DialogFooter>
-              </DialogContent>
+              <ParkingDialog
+                onOk={(payload) => {
+                  setParkingLots((lots) => [
+                    ...lots,
+                    { ...payload, uuid: uuidv4() },
+                  ]);
+                  setMoving(false);
+                }}
+              />
             </Dialog>
 
             <div className="flex justify-center gap-4 mt-8">
@@ -386,9 +414,22 @@ function Meeting({ topics, goBack }: { topics: Topic[]; goBack: () => void }) {
           <div>
             <h2 className="font-bold mb-2">Notes</h2>
             <div className="">
-              <Textarea className="mb-2" placeholder="Type your notes here." />
+              <Textarea
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                }}
+                value={notes}
+                className="mb-2"
+                placeholder="Type your notes here."
+              />
               <div className="flex justify-end">
-                <Button className="" variant="outline">
+                <Button
+                  onClick={() => {
+                    copyToClipboard(notes);
+                  }}
+                  className=""
+                  variant="outline"
+                >
                   COPY
                 </Button>
               </div>
@@ -396,35 +437,189 @@ function Meeting({ topics, goBack }: { topics: Topic[]; goBack: () => void }) {
           </div>
           <div className="">
             <h2 className="font-bold mb-2">Parking Lot</h2>
-            <ScrollArea className="h-32 w-full rounded-md border mb-2">
-              <p>Item 1</p>
-              <p>Item 2</p>
-              <p>Item 3</p>
+            <ScrollArea className="h-[300px] w-full rounded-md border mb-2">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="bg-blue-500 text-white">
+                      Topic
+                    </TableHead>
+                    <TableHead className="bg-blue-500 text-white">
+                      Description
+                    </TableHead>
+                    <TableHead className="bg-blue-500 text-white">
+                      Owners
+                    </TableHead>
+                    <TableHead className="bg-blue-500 text-white">
+                      Action
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {parkingLots.map((lot) => (
+                    <TableRow key={lot.uuid}>
+                      <TableCell className="font-medium">{lot.name}</TableCell>
+                      <TableCell>{lot.description}</TableCell>
+                      <TableCell>{lot.owners}</TableCell>
+
+                      <TableCell>
+                        <Button
+                          onClick={(log) => {
+                            setParkingLots(
+                              parkingLots.filter((t) => t.uuid !== lot.uuid)
+                            );
+                          }}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </ScrollArea>
 
             <div className="flex justify-between">
-              <Dialog>
+              <Dialog open={adding} onOpenChange={setAdding}>
                 <DialogTrigger asChild>
                   <Button className="mr-2" variant="outline">
                     ADD ITEM
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Add to Parking Lot</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4"></div>
-                  <DialogFooter>
-                    <Button type="submit">Save changes</Button>
-                  </DialogFooter>
-                </DialogContent>
+                <ParkingDialog
+                  onOk={(payload) => {
+                    setParkingLots((lots) => [
+                      ...lots,
+                      { ...payload, uuid: uuidv4() },
+                    ]);
+                    setAdding(false);
+                  }}
+                />
               </Dialog>
 
-              <Button variant="outline">COPY</Button>
+              <Button
+                onClick={() => {
+                  // copy all parking lots text content to clipboard
+                  copyToClipboard(
+                    parkingLots
+                      .map(
+                        (lot) =>
+                          `${lot.name} - ${lot.description} - ${lot.owners}`
+                      )
+                      .join('\n')
+                  );
+                }}
+                variant="outline"
+              >
+                COPY
+              </Button>
             </div>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+const parkintLotSchema = z.object({
+  name: z.string().min(1, {
+    message: 'Please enter a topic name.',
+  }),
+  description: z.string(),
+  owners: z.string(),
+});
+
+function ParkingDialog({
+  name = '',
+  description = '',
+  onOk,
+}: {
+  name?: string;
+  description?: string;
+  onOk(form: z.infer<typeof parkintLotSchema>): void;
+}) {
+  const form = useForm<z.infer<typeof parkintLotSchema>>({
+    resolver: zodResolver(parkintLotSchema),
+    defaultValues: {
+      name,
+      description,
+      owners: '',
+    },
+  });
+  // 2. Define a submit handler.
+  function onSubmit(payload: z.infer<typeof parkintLotSchema>) {
+    // setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
+    onOk(payload);
+    form.reset();
+  }
+  const formId = useId();
+  return (
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Add to Parking Lot</DialogTitle>
+      </DialogHeader>
+      <Form {...form}>
+        <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            name="name"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="">
+                <div className="flex items-baseline">
+                  <FormLabel className="w-32">Topic:</FormLabel>
+                  <div className="w-full">
+                    <FormControl>
+                      <Input placeholder="" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </div>
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="description"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex items-baseline">
+                <FormLabel className="w-32 break-words whitespace-normal">
+                  Description (optional):
+                </FormLabel>
+                <FormControl>
+                  <Textarea placeholder="" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="owners"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex items-baseline">
+                <FormLabel className="w-32 break-words whitespace-normal">
+                  Owners:
+                </FormLabel>
+                <FormControl>
+                  <Textarea placeholder="" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
+      <div className="grid gap-4 py-4"></div>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant={'outline'}>Cancel</Button>
+        </DialogClose>
+        <Button form={formId} type="submit">
+          Save changes
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
