@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
 
 import { useForm } from 'react-hook-form';
 import {
@@ -38,7 +39,9 @@ import {
   TableBody,
   Table,
 } from '@/components/ui/table';
-import { useReducer, useState } from 'react';
+import { Dispatch, SetStateAction, useReducer, useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const timeOptions = [1, 5, 10, 15, 20, 30, 60];
 
@@ -53,8 +56,27 @@ const topicSchema = z.object({
 type TopicForm = z.infer<typeof topicSchema>;
 
 type Topic = TopicForm & { uuid: string };
+type Status = 'setup' | 'meeting';
 
 export default function App() {
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [status, setStatus] = useState<Status>('setup');
+
+  return status == 'setup'
+    ? Prepare({
+        topics,
+        setTopics,
+      })
+    : Meeting();
+}
+
+function Prepare({
+  topics,
+  setTopics,
+}: {
+  topics: Topic[];
+  setTopics: Dispatch<SetStateAction<Topic[]>>;
+}) {
   const form = useForm<TopicForm>({
     resolver: zodResolver(topicSchema),
     defaultValues: {
@@ -68,8 +90,6 @@ export default function App() {
     setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
     form.reset();
   }
-  const [topics, setTopics] = useState<Topic[]>([]);
-
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
@@ -174,6 +194,9 @@ export default function App() {
                   <TableHead className="bg-blue-500 text-white">
                     Description
                   </TableHead>
+                  <TableHead className="bg-blue-500 text-white">
+                    Action
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -182,11 +205,126 @@ export default function App() {
                     <TableCell className="font-medium">{topic.name}</TableCell>
                     <TableCell>{topic.time} minutes</TableCell>
                     <TableCell>{topic.description}</TableCell>
+                    <TableCell>
+                      <Button
+                        onClick={() => {
+                          setTopics(
+                            topics.filter((t) => t.uuid !== topic.uuid)
+                          );
+                        }}
+                        variant="destructive"
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Meeting() {
+  return (
+    <div className="max-w-4xl mx-auto my-8 p-4">
+      <h1 className="text-2xl font-bold mb-6">
+        The ArcSite Meeting tool – Usage Screen
+      </h1>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="flex flex-col">
+          <label className="font-semibold mb-2" htmlFor="timeSpent">
+            Time Spent
+          </label>
+          <Input id="timeSpent" placeholder="44:00" />
+        </div>
+        <div className="flex flex-col">
+          <label className="font-semibold mb-2" htmlFor="dollarsCost">
+            Dollars Cost
+          </label>
+          <Input id="dollarsCost" placeholder="600" />
+        </div>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead />
+            <TableHead>Name</TableHead>
+            <TableHead>Time</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Clock</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell>
+              <Checkbox id="topic1" />
+            </TableCell>
+            <TableCell className="font-medium">Topic 1</TableCell>
+            <TableCell>30 minutes</TableCell>
+            <TableCell>Description of Topic 1</TableCell>
+            <TableCell>
+              <Button variant="outline">DONE</Button>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              <Checkbox id="topic2" />
+            </TableCell>
+            <TableCell className="font-medium">Topic 2</TableCell>
+            <TableCell>15 minutes</TableCell>
+            <TableCell>Description of Topic 2</TableCell>
+            <TableCell>
+              <Button variant="outline">DONE</Button>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              <Checkbox id="topic3" />
+            </TableCell>
+            <TableCell className="font-medium">Topic 3</TableCell>
+            <TableCell>15 minutes</TableCell>
+            <TableCell>
+              We need to decide on this{' '}
+              <Link href="#">www.notion.com/bigdecision</Link>
+            </TableCell>
+            <TableCell>
+              <div className="flex flex-col items-center">
+                <Button variant="outline">DONE</Button>
+                <span className="text-sm mt-1">1 minute left</span>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+      <div className="flex justify-between items-start my-6">
+        <div className="flex-1">
+          <Button className="mr-2" variant="outline">
+            Move to Parking Lot
+          </Button>
+          <Button variant="destructive">STOP</Button>
+        </div>
+        <div className="w-1/3">
+          <Textarea className="mb-2" placeholder="Type your notes here." />
+          <Button variant="outline">COPY</Button>
+        </div>
+      </div>
+      <div className="flex justify-between items-start">
+        <Button variant="outline">EDIT</Button>
+        <div className="w-1/3">
+          <h2 className="font-bold mb-2">Parking Lot</h2>
+          <ScrollArea className="h-32 w-full rounded-md border mb-2">
+            <p>Item 1</p>
+            <p>Item 2</p>
+            <p>Item 3</p>
+          </ScrollArea>
+          <Button className="mr-2" variant="outline">
+            ADD ITEM
+          </Button>
+          <Button variant="outline">COPY</Button>
         </div>
       </div>
     </div>
