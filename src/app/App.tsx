@@ -1,3 +1,4 @@
+'use client';
 /**
  * v0 by Vercel.
  * @see https://v0.dev/t/3Hszke86Sbq
@@ -10,9 +11,23 @@ import {
   SelectContent,
   Select,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Textarea } from '@/components/ui/textarea';
+
+import { useForm } from 'react-hook-form';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+
 import {
   TableHead,
   TableRow,
@@ -22,7 +37,34 @@ import {
   Table,
 } from '@/components/ui/table';
 
-export default function Component() {
+const timeOptions = [1, 5, 10, 15, 20, 30, 60];
+
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: 'Username must be at least 2 characters.',
+  }),
+  description: z.string(),
+  time: z.string().min(1, {
+    message: 'Username must be at least 2 characters.',
+  }),
+});
+
+export default function App() {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      time: '15',
+      description: '',
+    },
+  });
+  // 2. Define a submit handler.
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    console.log(values);
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
@@ -38,62 +80,77 @@ export default function Component() {
               >
                 Number of Participants:
               </label>
-              <Select>
-                <SelectTrigger id="participants">
-                  <SelectValue placeholder="3" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="3">3</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input type="number" />
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1" htmlFor="rate">
                 Fictional Hourly Rate ($/hr):
               </label>
-              <Input id="rate" placeholder="$" />
+              <Input type="number" id="rate" placeholder="$" />
             </div>
             <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Agenda Items</h2>
-              <div className="mb-2">
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="topic"
-                >
-                  Topic:
-                </label>
-                <Input id="topic" placeholder="" />
-              </div>
-              <div className="mb-2">
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="time"
-                >
-                  Time:
-                </label>
-                <Select>
-                  <SelectTrigger id="time">
-                    <SelectValue placeholder="15 Minutes" />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    <SelectItem value="5">5 Minutes</SelectItem>
-                    <SelectItem value="10">10 Minutes</SelectItem>
-                    <SelectItem value="15">15 Minutes</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="description"
-                >
-                  Description (optional):
-                </label>
-                <Textarea id="description" placeholder="" />
-              </div>
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white">{`Add >`}</Button>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                  <FormField
+                    name="name"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem className="flex items-baseline">
+                        <FormLabel className="w-24">Topic:</FormLabel>
+                        <FormControl>
+                          <Input placeholder="" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="time"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem className="flex items-baseline">
+                        <FormLabel className="w-24">Time:</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger id="time">
+                              <SelectValue placeholder="15 Minutes" />
+                            </SelectTrigger>
+                            <SelectContent position="popper">
+                              {timeOptions.map((time) => (
+                                <SelectItem key={time} value={time.toString()}>
+                                  {time} Minutes
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="description"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem className="flex items-baseline">
+                        <FormLabel className="w-32 break-words whitespace-normal">
+                          Description (optional):
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button className="bg-blue-500 hover:bg-blue-700 text-white">{`Add >`}</Button>
+                </form>
+              </Form>
             </div>
             <Button className="w-full bg-green-500 hover:bg-green-700 text-white">
               START
