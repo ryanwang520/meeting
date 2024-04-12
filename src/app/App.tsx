@@ -354,6 +354,8 @@ function Meeting({
   const [_, copyToClipboard] = useCopyToClipboard();
   const [moving, setMoving] = useState(false);
   const [adding, setAdding] = useState(false);
+  const movingFormId = useId();
+  const addingFormId = useId();
   const selectedTopic = topics.find((t) => t.uuid === selectedTopicId);
 
   const [seconds, setSeconds] = useState(0);
@@ -494,22 +496,27 @@ function Meeting({
                   Move to Parking Lot
                 </Button>
               </DialogTrigger>
-              <ParkingDialog
-                isOpen={moving}
-                name={selectedTopic?.name}
-                description={selectedTopic?.description}
-                onOk={(payload) => {
-                  setParkingLots((lots) => [
-                    ...lots,
-                    { ...payload, uuid: uuidv4() },
-                  ]);
-                  setTopics((topics) =>
-                    topics.filter((t) => t.uuid !== selectedTopicId)
-                  );
-                  setSelectedTopicId(null);
-                  setMoving(false);
-                }}
-              />
+              <ParkingDialog formId={movingFormId}>
+                {selectedTopic ? (
+                  <ParkingForm
+                    key={selectedTopicId}
+                    onOk={(payload) => {
+                      setParkingLots((lots) => [
+                        ...lots,
+                        { ...payload, uuid: uuidv4() },
+                      ]);
+                      setTopics((topics) =>
+                        topics.filter((t) => t.uuid !== selectedTopicId)
+                      );
+                      setSelectedTopicId(null);
+                      setMoving(false);
+                    }}
+                    name={selectedTopic.name}
+                    description={selectedTopic.description}
+                    formId={movingFormId}
+                  />
+                ) : null}
+              </ParkingDialog>
             </Dialog>
 
             <div className="flex justify-center gap-4 mt-8">
@@ -606,16 +613,18 @@ function Meeting({
                     ADD ITEM
                   </Button>
                 </DialogTrigger>
-                <ParkingDialog
-                  isOpen={adding}
-                  onOk={(payload) => {
-                    setParkingLots((lots) => [
-                      ...lots,
-                      { ...payload, uuid: uuidv4() },
-                    ]);
-                    setAdding(false);
-                  }}
-                />
+                <ParkingDialog formId={addingFormId}>
+                  <ParkingForm
+                    onOk={(payload) => {
+                      setParkingLots((lots) => [
+                        ...lots,
+                        { ...payload, uuid: uuidv4() },
+                      ]);
+                      setAdding(false);
+                    }}
+                    formId={addingFormId}
+                  />
+                </ParkingDialog>
               </Dialog>
 
               <Button
@@ -659,8 +668,8 @@ function ParkingForm({
   onOk,
 }: {
   formId: string;
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
   onOk(form: z.infer<typeof parkintLotSchema>): void;
 }) {
   const form = useForm<z.infer<typeof parkintLotSchema>>({
@@ -677,6 +686,9 @@ function ParkingForm({
     onOk(payload);
     form.reset();
   }
+  useEffect(() => {
+    console.log('mount');
+  }, []);
   return (
     <Form {...form}>
       <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
@@ -737,32 +749,19 @@ function ParkingForm({
 }
 
 function ParkingDialog({
-  name = '',
-  description = '',
-  onOk,
-  isOpen,
+  children,
+  formId,
 }: {
-  isOpen: boolean;
-  name?: string;
-  description?: string;
-  onOk(form: z.infer<typeof parkintLotSchema>): void;
+  children: React.ReactNode;
+  formId: string;
 }) {
-  const formId = useId();
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
         <DialogTitle>Add to Parking Lot</DialogTitle>
       </DialogHeader>
 
-      <div className="grid gap-4 py-4">
-        <ParkingForm
-          key={isOpen.toString()}
-          onOk={onOk}
-          name={name}
-          description={description}
-          formId={formId}
-        />
-      </div>
+      <div className="grid gap-4 py-4">{children}</div>
       <DialogFooter>
         <DialogClose asChild>
           <Button variant={'outline'}>Cancel</Button>
