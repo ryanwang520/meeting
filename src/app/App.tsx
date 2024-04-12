@@ -39,7 +39,7 @@ import {
   TableBody,
   Table,
 } from '@/components/ui/table';
-import { Dispatch, SetStateAction, useReducer, useState } from 'react';
+import { Dispatch, SetStateAction, useReducer, useRef, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -62,20 +62,30 @@ export default function App() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [status, setStatus] = useState<Status>('setup');
 
-  return status == 'setup'
-    ? Prepare({
-        topics,
-        setTopics,
-      })
-    : Meeting();
+  return status == 'setup' ? (
+    <Prepare
+      topics={topics}
+      setTopics={setTopics}
+      startMeeting={({ participants, rate }) => {
+        // setParticipants(participants);
+        // setRate(rate)
+        console.log(participants, rate);
+        setStatus('meeting');
+      }}
+    />
+  ) : (
+    <Meeting topics={topics} />
+  );
 }
 
 function Prepare({
   topics,
   setTopics,
+  startMeeting,
 }: {
   topics: Topic[];
   setTopics: Dispatch<SetStateAction<Topic[]>>;
+  startMeeting: (params: { participants: number; rate: number }) => void;
 }) {
   const form = useForm<TopicForm>({
     resolver: zodResolver(topicSchema),
@@ -90,6 +100,7 @@ function Prepare({
     setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
     form.reset();
   }
+  const settingsForm = useRef<HTMLFormElement | null>(null);
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
@@ -98,21 +109,43 @@ function Prepare({
         </h1>
         <div className="flex gap-8">
           <div className="flex-1">
-            <div className="mb-4">
-              <label
-                className="block text-sm font-medium mb-1"
-                htmlFor="participants"
-              >
-                Number of Participants:
-              </label>
-              <Input type="number" />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1" htmlFor="rate">
-                Fictional Hourly Rate ($/hr):
-              </label>
-              <Input type="number" id="rate" placeholder="$" />
-            </div>
+            <form
+              id="settings"
+              ref={settingsForm}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const participants = Number(
+                  settingsForm.current!.participants.value
+                );
+                const rate = Number(settingsForm.current!.rate.value);
+                startMeeting({ participants, rate });
+              }}
+            >
+              <div className="mb-4">
+                <label
+                  className="block text-sm font-medium mb-1"
+                  htmlFor="participants"
+                >
+                  Number of Participants:
+                </label>
+                <Input required name="participants" type="number" />
+              </div>
+              <div className="mb-4">
+                <label
+                  className="block text-sm font-medium mb-1"
+                  htmlFor="rate"
+                >
+                  Fictional Hourly Rate ($/hr):
+                </label>
+                <Input
+                  required
+                  name="rate"
+                  type="number"
+                  id="rate"
+                  placeholder="$"
+                />
+              </div>
+            </form>
             <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Agenda Items</h2>
               <Form {...form}>
@@ -181,7 +214,11 @@ function Prepare({
                 </form>
               </Form>
             </div>
-            <Button className="w-full bg-green-500 hover:bg-green-700 text-white">
+            <Button
+              type="submit"
+              form="settings"
+              className="w-full bg-green-500 hover:bg-green-700 text-white"
+            >
               START
             </Button>
           </div>
@@ -228,7 +265,7 @@ function Prepare({
   );
 }
 
-function Meeting() {
+function Meeting({ topics }: { topics: Topic[] }) {
   return (
     <div className="max-w-4xl mx-auto my-8 p-4">
       <h1 className="text-2xl font-bold mb-6">
