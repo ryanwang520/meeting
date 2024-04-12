@@ -222,7 +222,7 @@ function Prepare({
                         <FormControl>
                           <Select
                             onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            value={field.value}
                           >
                             <SelectTrigger id="time">
                               <SelectValue placeholder="15 Minutes" />
