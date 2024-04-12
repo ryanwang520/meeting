@@ -580,55 +580,57 @@ function ParkingForm({
   return (
     <Form {...form}>
       <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          name="name"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem className="">
-              <div className="flex items-baseline">
-                <FormLabel className="w-32">Topic:</FormLabel>
-                <div className="w-full">
-                  <FormControl>
-                    <Input placeholder="" {...field} />
-                  </FormControl>
-                  <FormMessage />
+        <div className="flex flex-col gap-4">
+          <FormField
+            name="name"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="">
+                <div className="flex items-baseline">
+                  <FormLabel className="w-32">Topic:</FormLabel>
+                  <div className="w-full">
+                    <FormControl>
+                      <Input placeholder="" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </div>
                 </div>
-              </div>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="description"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem className="flex items-baseline">
-              <FormLabel className="w-32 break-words whitespace-normal">
-                Description (optional):
-              </FormLabel>
-              <FormControl>
-                <Textarea placeholder="" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="owners"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem className="">
-              <div className="flex items-baseline">
-                <FormLabel className="w-32">Owners:</FormLabel>
-                <div className="w-full">
-                  <FormControl>
-                    <Input placeholder="" {...field} />
-                  </FormControl>
-                  <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="description"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex items-baseline">
+                <FormLabel className="w-32 break-words whitespace-normal">
+                  Description (optional):
+                </FormLabel>
+                <FormControl>
+                  <Textarea placeholder="" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="owners"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="">
+                <div className="flex items-baseline">
+                  <FormLabel className="w-32">Owners:</FormLabel>
+                  <div className="w-full">
+                    <FormControl>
+                      <Input placeholder="" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </div>
                 </div>
-              </div>
-            </FormItem>
-          )}
-        />
+              </FormItem>
+            )}
+          />
+        </div>
       </form>
     </Form>
   );
