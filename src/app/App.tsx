@@ -94,8 +94,8 @@ const mockTopics: Topic[] = [
   },
 ];
 export default function App() {
-  const [topics, setTopics] = useState<Topic[]>(mockTopics);
-  const [status, setStatus] = useState<Status>('meeting');
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [status, setStatus] = useState<Status>('setup');
   const [participants, setParticipants] = useState<number>(1);
   const [rate, setRate] = useState<number>(100);
 
@@ -383,7 +383,7 @@ function Meeting({
     );
     const topicEndSeconds = prevSeconds + Number(topic.time) * 60;
     if (prevSeconds > seconds) {
-      return 'Pending';
+      return '';
     }
     if (topicEndSeconds < seconds) {
       return 'Done';
@@ -404,11 +404,13 @@ function Meeting({
       </TableCell>
     );
   }
-  function isDone(topic: Topic) {
-    const topicEndSeconds = topics
-      .slice(0, topics.indexOf(topic) + 1)
-      .reduce((acc, t) => acc + Number(t.time) * 60, 0);
-    return topicEndSeconds < seconds;
+  function isStarted(topic: Topic) {
+    const prevTopics = topics.slice(0, topics.indexOf(topic));
+    const prevSeconds = prevTopics.reduce(
+      (acc, t) => acc + Number(t.time) * 60,
+      0
+    );
+    return seconds > prevSeconds;
   }
 
   return (
@@ -425,7 +427,7 @@ function Meeting({
               <label className="font-semibold mb-2" htmlFor="timeSpent">
                 Time Spent
               </label>
-              <div className="w-24 h-10 border flex items-center justify-center">
+              <div className="w-32 h-10 border flex items-center justify-center">
                 ${timeSpent}
               </div>
             </div>
@@ -433,7 +435,7 @@ function Meeting({
               <label className="font-semibold mb-2" htmlFor="dollarsCost">
                 Dollars Cost
               </label>
-              <div className="w-24 h-10 border flex items-center justify-center">
+              <div className="w-32 h-10 border flex items-center justify-center">
                 ${dollars.toFixed(2)}
               </div>
             </div>
@@ -453,7 +455,7 @@ function Meeting({
                 <TableRow key={topic.uuid}>
                   <TableCell>
                     <Checkbox
-                      disabled={isDone(topic)}
+                      disabled={isStarted(topic)}
                       onCheckedChange={(checked) => {
                         if (checked) {
                           setSelectedTopicId(topic.uuid);
