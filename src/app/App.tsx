@@ -58,9 +58,30 @@ type TopicForm = z.infer<typeof topicSchema>;
 type Topic = TopicForm & { uuid: string };
 type Status = 'setup' | 'meeting';
 
+// generate some test topic data
+const mockTopics: Topic[] = [
+  {
+    name: 'Topic 1',
+    description: 'Description of topic 1',
+    time: '15',
+    uuid: '1',
+  },
+  {
+    name: 'Topic 2',
+    description: 'Description of topic 2',
+    time: '30',
+    uuid: '2',
+  },
+  {
+    name: 'Topic 3',
+    description: 'Description of topic 3',
+    time: '10',
+    uuid: '3',
+  },
+];
 export default function App() {
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [status, setStatus] = useState<Status>('setup');
+  const [topics, setTopics] = useState<Topic[]>(mockTopics);
+  const [status, setStatus] = useState<Status>('meeting');
 
   return status == 'setup' ? (
     <Prepare
