@@ -378,9 +378,24 @@ function Meeting({ topics }: { topics: Topic[] }) {
             <p>Item 2</p>
             <p>Item 3</p>
           </ScrollArea>
-          <Button className="mr-2" variant="outline">
-            ADD ITEM
-          </Button>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="mr-2" variant="outline">
+                ADD ITEM
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add to Parking Lot</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4"></div>
+              <DialogFooter>
+                <Button type="submit">Save changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Button variant="outline">COPY</Button>
         </div>
       </div>
