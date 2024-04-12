@@ -266,6 +266,10 @@ function Prepare({
 }
 
 function Meeting({ topics }: { topics: Topic[] }) {
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+  function renderTopicStatus(topic: Topic) {
+    return 'Done';
+  }
   return (
     <div className="max-w-4xl mx-auto my-8 p-4">
       <h1 className="text-2xl font-bold mb-6">
@@ -296,45 +300,17 @@ function Meeting({ topics }: { topics: Topic[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell>
-              <Checkbox id="topic1" />
-            </TableCell>
-            <TableCell className="font-medium">Topic 1</TableCell>
-            <TableCell>30 minutes</TableCell>
-            <TableCell>Description of Topic 1</TableCell>
-            <TableCell>
-              <Button variant="outline">DONE</Button>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>
-              <Checkbox id="topic2" />
-            </TableCell>
-            <TableCell className="font-medium">Topic 2</TableCell>
-            <TableCell>15 minutes</TableCell>
-            <TableCell>Description of Topic 2</TableCell>
-            <TableCell>
-              <Button variant="outline">DONE</Button>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>
-              <Checkbox id="topic3" />
-            </TableCell>
-            <TableCell className="font-medium">Topic 3</TableCell>
-            <TableCell>15 minutes</TableCell>
-            <TableCell>
-              We need to decide on this{' '}
-              <Link href="#">www.notion.com/bigdecision</Link>
-            </TableCell>
-            <TableCell>
-              <div className="flex flex-col items-center">
-                <Button variant="outline">DONE</Button>
-                <span className="text-sm mt-1">1 minute left</span>
-              </div>
-            </TableCell>
-          </TableRow>
+          {topics.map((topic) => (
+            <TableRow key={topic.uuid}>
+              <TableCell>
+                <Checkbox id="topic1" />
+              </TableCell>
+              <TableCell className="font-medium">Topic 1</TableCell>
+              <TableCell>{topic.time} minutes</TableCell>
+              <TableCell>{topic.description}</TableCell>
+              <TableCell>{renderTopicStatus(topic)}</TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
       <div className="flex justify-between items-start my-6">
