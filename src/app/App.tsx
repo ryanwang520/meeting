@@ -362,12 +362,20 @@ function Meeting({
 
   const timeSpent = formatTime(seconds);
 
+  const timer = useRef<NodeJS.Timeout | null>(null);
+  function clearTimer() {
+    if (timer.current) {
+      clearInterval(timer.current);
+    }
+  }
+
   useEffect(() => {
     const startTime = new Date().getTime();
     const interval = setInterval(() => {
       const now = new Date().getTime();
       setSeconds((now - startTime) / 1000);
     }, 1000);
+    timer.current = interval;
 
     return () => {
       clearInterval(interval);
@@ -508,7 +516,13 @@ function Meeting({
               <Button onClick={() => goBack()} size="sm" variant="outline">
                 &lt;EDIT
               </Button>
-              <Button size="sm" variant="outline">
+              <Button
+                onClick={() => {
+                  clearTimer();
+                }}
+                size="sm"
+                variant="outline"
+              >
                 STOP
               </Button>
             </div>
