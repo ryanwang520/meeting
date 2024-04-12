@@ -47,6 +47,7 @@ import {
 import {
   Dispatch,
   SetStateAction,
+  useEffect,
   useId,
   useReducer,
   useRef,
@@ -95,6 +96,8 @@ const mockTopics: Topic[] = [
 export default function App() {
   const [topics, setTopics] = useState<Topic[]>(mockTopics);
   const [status, setStatus] = useState<Status>('meeting');
+  const [participants, setParticipants] = useState<number>(1);
+  const [rate, setRate] = useState<number>(100);
 
   return (
     <div>
@@ -104,8 +107,8 @@ export default function App() {
           topics={topics}
           setTopics={setTopics}
           startMeeting={({ participants, rate }) => {
-            // setParticipants(participants);
-            // setRate(rate)
+            setParticipants(participants);
+            setRate(rate);
             console.log(participants, rate);
             setStatus('meeting');
           }}
@@ -115,6 +118,8 @@ export default function App() {
           goBack={() => {
             setStatus('setup');
           }}
+          participants={participants}
+          rate={rate}
           initialTopics={topics}
         />
       )}
@@ -313,24 +318,98 @@ type ParkingLot = {
   uuid: string;
 };
 
+function formatTime(totalSeconds: number) {
+  const hours = Math.floor(totalSeconds / 3600); // Compute total hours
+  const minutes = Math.floor((totalSeconds % 3600) / 60); // Compute remaining minutes
+  const seconds = totalSeconds % 60; // Compute remaining seconds
+
+  // Pad the minutes and seconds with leading zeros if needed
+  const paddedHours = String(hours).padStart(2, '0');
+  const paddedMinutes = String(minutes).padStart(2, '0');
+  const paddedSeconds = String(seconds.toFixed(0)).padStart(2, '0');
+
+  // Format the time string in hh:mm:ss format
+  if (hours > 0) {
+    const paddedHours = String(hours).padStart(2, '0');
+    return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+  } else {
+    return `${paddedMinutes}:${paddedSeconds}`;
+  }
+}
 function Meeting({
   initialTopics,
   goBack,
+  participants,
+  rate,
 }: {
+  participants: number;
+  rate: number;
   initialTopics: Topic[];
   goBack: () => void;
 }) {
   const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  function renderTopicStatus(topic: Topic) {
-    return 'Done';
-  }
   const [notes, setNotes] = useState('');
   const [_, copyToClipboard] = useCopyToClipboard();
   const [moving, setMoving] = useState(false);
   const [adding, setAdding] = useState(false);
   const selectedTopic = topics.find((t) => t.uuid === selectedTopicId);
+
+  const [seconds, setSeconds] = useState(0);
+
+  const dollars = (participants * rate * seconds) / 3600;
+
+  const timeSpent = formatTime(seconds);
+
+  useEffect(() => {
+    const startTime = new Date().getTime();
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      setSeconds((now - startTime) / 1000);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [participants, rate]);
+
+  function renderTopicStatus(topic: Topic) {
+    // assign topics with index less than this one to varialbe prevTopics
+    const prevTopics = topics.slice(0, topics.indexOf(topic));
+    const prevSeconds = prevTopics.reduce(
+      (acc, t) => acc + Number(t.time) * 60,
+      0
+    );
+    const topicEndSeconds = prevSeconds + Number(topic.time) * 60;
+    if (prevSeconds > seconds) {
+      return 'Pending';
+    }
+    if (topicEndSeconds < seconds) {
+      return 'Done';
+    }
+    const countdownSeconds = topicEndSeconds - seconds;
+    function applyStyle(seconds: number) {
+      if (seconds < 60) {
+        return { backgroundColor: '#ea3323', color: 'white' };
+      }
+      if (seconds < 60 * 3) {
+        return { backgroundColor: '#ffff54', color: 'black' };
+      }
+      return {};
+    }
+    return (
+      <TableCell className="" style={applyStyle(countdownSeconds)}>
+        {formatTime(countdownSeconds)}
+      </TableCell>
+    );
+  }
+  function isDone(topic: Topic) {
+    const topicEndSeconds = topics
+      .slice(0, topics.indexOf(topic) + 1)
+      .reduce((acc, t) => acc + Number(t.time) * 60, 0);
+    return topicEndSeconds < seconds;
+  }
 
   return (
     <div>
@@ -346,13 +425,17 @@ function Meeting({
               <label className="font-semibold mb-2" htmlFor="timeSpent">
                 Time Spent
               </label>
-              <Input id="timeSpent" placeholder="44:00" />
+              <div className="w-24 h-10 border flex items-center justify-center">
+                ${timeSpent}
+              </div>
             </div>
-            <div className="flex flex-col">
+            <div className="">
               <label className="font-semibold mb-2" htmlFor="dollarsCost">
                 Dollars Cost
               </label>
-              <Input id="dollarsCost" placeholder="600" />
+              <div className="w-24 h-10 border flex items-center justify-center">
+                ${dollars.toFixed(2)}
+              </div>
             </div>
           </div>
           <Table>
@@ -370,6 +453,7 @@ function Meeting({
                 <TableRow key={topic.uuid}>
                   <TableCell>
                     <Checkbox
+                      disabled={isDone(topic)}
                       onCheckedChange={(checked) => {
                         if (checked) {
                           setSelectedTopicId(topic.uuid);
@@ -383,7 +467,7 @@ function Meeting({
                   <TableCell className="font-medium">{topic.name}</TableCell>
                   <TableCell>{topic.time} minutes</TableCell>
                   <TableCell>{topic.description}</TableCell>
-                  <TableCell>{renderTopicStatus(topic)}</TableCell>
+                  {renderTopicStatus(topic)}
                 </TableRow>
               ))}
             </TableBody>
