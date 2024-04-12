@@ -330,6 +330,7 @@ function Meeting({
   const [_, copyToClipboard] = useCopyToClipboard();
   const [moving, setMoving] = useState(false);
   const [adding, setAdding] = useState(false);
+  const selectedTopic = topics.find((t) => t.uuid === selectedTopicId);
 
   return (
     <div>
@@ -368,9 +369,18 @@ function Meeting({
               {topics.map((topic) => (
                 <TableRow key={topic.uuid}>
                   <TableCell>
-                    <Checkbox id="topic1" />
+                    <Checkbox
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedTopicId(topic.uuid);
+                        } else {
+                          setSelectedTopicId(null);
+                        }
+                      }}
+                      checked={selectedTopicId === topic.uuid}
+                    />
                   </TableCell>
-                  <TableCell className="font-medium">Topic 1</TableCell>
+                  <TableCell className="font-medium">{topic.name}</TableCell>
                   <TableCell>{topic.time} minutes</TableCell>
                   <TableCell>{topic.description}</TableCell>
                   <TableCell>{renderTopicStatus(topic)}</TableCell>
@@ -385,16 +395,24 @@ function Meeting({
                   disabled={!selectedTopicId}
                   className="mr-2"
                   variant="outline"
+                  onClick={() => {}}
                 >
                   Move to Parking Lot
                 </Button>
               </DialogTrigger>
               <ParkingDialog
+                isOpen={moving}
+                name={selectedTopic?.name}
+                description={selectedTopic?.description}
                 onOk={(payload) => {
                   setParkingLots((lots) => [
                     ...lots,
                     { ...payload, uuid: uuidv4() },
                   ]);
+                  setTopics((topics) =>
+                    topics.filter((t) => t.uuid !== selectedTopicId)
+                  );
+                  setSelectedTopicId(null);
                   setMoving(false);
                 }}
               />
@@ -489,6 +507,7 @@ function Meeting({
                   </Button>
                 </DialogTrigger>
                 <ParkingDialog
+                  isOpen={adding}
                   onOk={(payload) => {
                     setParkingLots((lots) => [
                       ...lots,
@@ -531,13 +550,15 @@ const parkintLotSchema = z.object({
   owners: z.string(),
 });
 
-function ParkingDialog({
-  name = '',
-  description = '',
+function ParkingForm({
+  formId,
+  name,
+  description,
   onOk,
 }: {
-  name?: string;
-  description?: string;
+  formId: string;
+  name: string;
+  description: string;
   onOk(form: z.infer<typeof parkintLotSchema>): void;
 }) {
   const form = useForm<z.infer<typeof parkintLotSchema>>({
@@ -554,64 +575,88 @@ function ParkingDialog({
     onOk(payload);
     form.reset();
   }
+  return (
+    <Form {...form}>
+      <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
+        <FormField
+          name="name"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem className="">
+              <div className="flex items-baseline">
+                <FormLabel className="w-32">Topic:</FormLabel>
+                <div className="w-full">
+                  <FormControl>
+                    <Input placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="description"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem className="flex items-baseline">
+              <FormLabel className="w-32 break-words whitespace-normal">
+                Description (optional):
+              </FormLabel>
+              <FormControl>
+                <Textarea placeholder="" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="owners"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem className="flex items-baseline">
+              <FormLabel className="w-32 break-words whitespace-normal">
+                Owners:
+              </FormLabel>
+              <FormControl>
+                <Textarea placeholder="" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
+  );
+}
+
+function ParkingDialog({
+  name = '',
+  description = '',
+  onOk,
+  isOpen,
+}: {
+  isOpen: boolean;
+  name?: string;
+  description?: string;
+  onOk(form: z.infer<typeof parkintLotSchema>): void;
+}) {
   const formId = useId();
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
         <DialogTitle>Add to Parking Lot</DialogTitle>
       </DialogHeader>
-      <Form {...form}>
-        <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-          <FormField
-            name="name"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="">
-                <div className="flex items-baseline">
-                  <FormLabel className="w-32">Topic:</FormLabel>
-                  <div className="w-full">
-                    <FormControl>
-                      <Input placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </div>
-                </div>
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="description"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="flex items-baseline">
-                <FormLabel className="w-32 break-words whitespace-normal">
-                  Description (optional):
-                </FormLabel>
-                <FormControl>
-                  <Textarea placeholder="" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="owners"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="flex items-baseline">
-                <FormLabel className="w-32 break-words whitespace-normal">
-                  Owners:
-                </FormLabel>
-                <FormControl>
-                  <Textarea placeholder="" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
-      <div className="grid gap-4 py-4"></div>
+
+      <div className="grid gap-4 py-4">
+        <ParkingForm
+          key={isOpen.toString()}
+          onOk={onOk}
+          name={name}
+          description={description}
+          formId={formId}
+        />
+      </div>
       <DialogFooter>
         <DialogClose asChild>
           <Button variant={'outline'}>Cancel</Button>
