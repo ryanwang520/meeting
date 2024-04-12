@@ -301,102 +301,122 @@ function Meeting({ topics }: { topics: Topic[] }) {
     return 'Done';
   }
   return (
-    <div className="max-w-4xl mx-auto my-8 p-4">
-      <h1 className="text-2xl font-bold mb-6">
-        The ArcSite Meeting tool – Usage Screen
-      </h1>
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="flex flex-col">
-          <label className="font-semibold mb-2" htmlFor="timeSpent">
-            Time Spent
-          </label>
-          <Input id="timeSpent" placeholder="44:00" />
-        </div>
-        <div className="flex flex-col">
-          <label className="font-semibold mb-2" htmlFor="dollarsCost">
-            Dollars Cost
-          </label>
-          <Input id="dollarsCost" placeholder="600" />
-        </div>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead />
-            <TableHead>Name</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Clock</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {topics.map((topic) => (
-            <TableRow key={topic.uuid}>
-              <TableCell>
-                <Checkbox id="topic1" />
-              </TableCell>
-              <TableCell className="font-medium">Topic 1</TableCell>
-              <TableCell>{topic.time} minutes</TableCell>
-              <TableCell>{topic.description}</TableCell>
-              <TableCell>{renderTopicStatus(topic)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="flex justify-between items-start my-6">
-        <div className="flex-1">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="mr-2" variant="outline">
-                Move to Parking Lot
+    <div>
+      <h1 className="text-2xl font-bold mb-6">The ArcSite Meeting tool</h1>
+      <div
+        className="max-w-4xl mx-auto my-8 p-4 grid gap-4"
+        style={{
+          gridTemplateColumns: '2fr 1fr',
+        }}
+      >
+        <div>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex flex-col">
+              <label className="font-semibold mb-2" htmlFor="timeSpent">
+                Time Spent
+              </label>
+              <Input id="timeSpent" placeholder="44:00" />
+            </div>
+            <div className="flex flex-col">
+              <label className="font-semibold mb-2" htmlFor="dollarsCost">
+                Dollars Cost
+              </label>
+              <Input id="dollarsCost" placeholder="600" />
+            </div>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead />
+                <TableHead>Name</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Clock</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {topics.map((topic) => (
+                <TableRow key={topic.uuid}>
+                  <TableCell>
+                    <Checkbox id="topic1" />
+                  </TableCell>
+                  <TableCell className="font-medium">Topic 1</TableCell>
+                  <TableCell>{topic.time} minutes</TableCell>
+                  <TableCell>{topic.description}</TableCell>
+                  <TableCell>{renderTopicStatus(topic)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="flex-1 mt-8">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="mr-2" variant="outline">
+                  Move to Parking Lot
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Move to Parking Lot</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">hello</div>
+                <DialogFooter>
+                  <Button type="submit">Save changes</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <div className="flex justify-center gap-4 mt-8">
+              <Button size="sm" variant="outline">
+                &lt;EDIT
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Move to Parking Lot</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">hello</div>
-              <DialogFooter>
-                <Button type="submit">Save changes</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Button variant="destructive">STOP</Button>
-        </div>
-        <div className="w-1/3">
-          <Textarea className="mb-2" placeholder="Type your notes here." />
-          <Button variant="outline">COPY</Button>
-        </div>
-      </div>
-      <div className="flex justify-between items-start">
-        <Button variant="outline">EDIT</Button>
-        <div className="w-1/3">
-          <h2 className="font-bold mb-2">Parking Lot</h2>
-          <ScrollArea className="h-32 w-full rounded-md border mb-2">
-            <p>Item 1</p>
-            <p>Item 2</p>
-            <p>Item 3</p>
-          </ScrollArea>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="mr-2" variant="outline">
-                ADD ITEM
+              <Button size="sm" variant="outline">
+                STOP
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add to Parking Lot</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4"></div>
-              <DialogFooter>
-                <Button type="submit">Save changes</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-8">
+          <div>
+            <h2 className="font-bold mb-2">Notes</h2>
+            <div className="">
+              <Textarea className="mb-2" placeholder="Type your notes here." />
+              <div className="flex justify-end">
+                <Button className="" variant="outline">
+                  COPY
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="">
+            <h2 className="font-bold mb-2">Parking Lot</h2>
+            <ScrollArea className="h-32 w-full rounded-md border mb-2">
+              <p>Item 1</p>
+              <p>Item 2</p>
+              <p>Item 3</p>
+            </ScrollArea>
 
-          <Button variant="outline">COPY</Button>
+            <div className="flex justify-between">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="mr-2" variant="outline">
+                    ADD ITEM
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Add to Parking Lot</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4"></div>
+                  <DialogFooter>
+                    <Button type="submit">Save changes</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Button variant="outline">COPY</Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
