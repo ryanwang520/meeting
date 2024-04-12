@@ -7,6 +7,15 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   SelectValue,
   SelectTrigger,
   SelectItem,
@@ -336,9 +345,23 @@ function Meeting({ topics }: { topics: Topic[] }) {
       </Table>
       <div className="flex justify-between items-start my-6">
         <div className="flex-1">
-          <Button className="mr-2" variant="outline">
-            Move to Parking Lot
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="mr-2" variant="outline">
+                Move to Parking Lot
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Move to Parking Lot</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">hello</div>
+              <DialogFooter>
+                <Button type="submit">Save changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Button variant="destructive">STOP</Button>
         </div>
         <div className="w-1/3">
