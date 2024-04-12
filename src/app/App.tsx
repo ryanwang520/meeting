@@ -547,7 +547,9 @@ const parkintLotSchema = z.object({
     message: 'Please enter a topic name.',
   }),
   description: z.string(),
-  owners: z.string(),
+  owners: z.string().min(1, {
+    message: 'Please enter at least one owner.',
+  }),
 });
 
 function ParkingForm({
@@ -614,14 +616,16 @@ function ParkingForm({
           name="owners"
           control={form.control}
           render={({ field }) => (
-            <FormItem className="flex items-baseline">
-              <FormLabel className="w-32 break-words whitespace-normal">
-                Owners:
-              </FormLabel>
-              <FormControl>
-                <Textarea placeholder="" {...field} />
-              </FormControl>
-              <FormMessage />
+            <FormItem className="">
+              <div className="flex items-baseline">
+                <FormLabel className="w-32">Owners:</FormLabel>
+                <div className="w-full">
+                  <FormControl>
+                    <Input placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </div>
             </FormItem>
           )}
         />
