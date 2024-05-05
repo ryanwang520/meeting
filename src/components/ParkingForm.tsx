@@ -14,15 +14,7 @@ import {
 } from '@/components/ui/form';
 
 import { useEffect } from 'react';
-const parkintLotSchema = z.object({
-  name: z.string().min(1, {
-    message: 'Please enter a topic name.',
-  }),
-  description: z.string(),
-  owners: z.string().min(1, {
-    message: 'Please enter at least one owner.',
-  }),
-});
+import { ParkingLotFormData, parkintLotSchema } from '@/lib/types';
 
 export default function ParkingForm({
   formId,
@@ -35,7 +27,7 @@ export default function ParkingForm({
   description?: string;
   onOk(form: z.infer<typeof parkintLotSchema>): void;
 }) {
-  const form = useForm<z.infer<typeof parkintLotSchema>>({
+  const form = useForm<ParkingLotFormData>({
     resolver: zodResolver(parkintLotSchema),
     defaultValues: {
       name,
@@ -44,7 +36,7 @@ export default function ParkingForm({
     },
   });
   // 2. Define a submit handler.
-  function onSubmit(payload: z.infer<typeof parkintLotSchema>) {
+  function onSubmit(payload: ParkingLotFormData) {
     // setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
     onOk(payload);
     form.reset();

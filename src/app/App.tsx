@@ -1,9 +1,7 @@
 'use client';
 import { v4 as uuidv4 } from 'uuid';
-import { useCopyToClipboard } from 'react-use';
 import { formatTime } from '@/lib/utils';
 
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import {
   SelectValue,
   SelectTrigger,
@@ -35,21 +33,19 @@ import {
   TableBody,
   Table,
 } from '@/components/ui/table';
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
-import ParkingDialog from '@/components/ParkingDialog';
-import ParkingForm from '@/components/ParkingForm';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import MeetingTable from '@/components/MeetingTable';
-import { Topic, TopicForm, topicSchema } from '@/lib/types';
+import {
+  ParkingLot,
+  ParkingLotFormData,
+  Topic,
+  TopicForm,
+  topicSchema,
+} from '@/lib/types';
+import Notes from '@/components/Notes';
+import ParkingSection from '@/components/ParkingSection';
+import MeetingTableActions from '@/components/MeetingTableActions';
+import MeetingCost from '@/components/MeetingCost';
 
 const timeOptions = [1, 5, 10, 15, 20, 30, 60];
 
@@ -303,13 +299,6 @@ function Prepare({
   );
 }
 
-type ParkingLot = {
-  name: string;
-  description: string;
-  owners: string;
-  uuid: string;
-};
-
 function Meeting({
   initialTopics,
   goBack,
@@ -324,12 +313,6 @@ function Meeting({
   const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  const [notes, setNotes] = useState('');
-  const [_, copyToClipboard] = useCopyToClipboard();
-  const [moving, setMoving] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const movingFormId = useId();
-  const addingFormId = useId();
   const selectedTopic = topics.find((t) => t.uuid === selectedTopicId);
 
   const [seconds, setSeconds] = useState(0);
@@ -338,12 +321,33 @@ function Meeting({
 
   const timeSpent = formatTime(seconds);
 
+  const onMoveTopic = useCallback(
+    (payload: ParkingLotFormData) => {
+      setParkingLots((lots) => [...lots, { ...payload, uuid: uuidv4() }]);
+      setTopics((topics) => topics.filter((t) => t.uuid !== selectedTopicId));
+      setSelectedTopicId(null);
+    },
+    [selectedTopicId]
+  );
+
+  const onAddParkingLot = useCallback((payload: ParkingLotFormData) => {
+    setParkingLots((lots) => [...lots, { ...payload, uuid: uuidv4() }]);
+  }, []);
+  const onDeleteParkingLot = useCallback((lot: ParkingLot) => {
+    setParkingLots((parkingLots) =>
+      parkingLots.filter((t) => t.uuid !== lot.uuid)
+    );
+  }, []);
+
   const timer = useRef<NodeJS.Timeout | null>(null);
   function clearTimer() {
     if (timer.current) {
       clearInterval(timer.current);
     }
   }
+  const onStop = useCallback(() => {
+    clearTimer();
+  }, []);
 
   useEffect(() => {
     const startTime = new Date().getTime();
@@ -367,191 +371,28 @@ function Meeting({
         }}
       >
         <div>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="flex flex-col">
-              <label className="font-semibold mb-2" htmlFor="timeSpent">
-                Time Spent
-              </label>
-              <div className="w-32 h-10 border flex items-center justify-center">
-                ${timeSpent}
-              </div>
-            </div>
-            <div className="">
-              <label className="font-semibold mb-2" htmlFor="dollarsCost">
-                Dollars Cost
-              </label>
-              <div className="w-32 h-10 border flex items-center justify-center">
-                ${dollars.toFixed(2)}
-              </div>
-            </div>
-          </div>
+          <MeetingCost timeSpent={timeSpent} dollars={dollars} />
+
           <MeetingTable
             topics={topics}
             seconds={seconds}
             selectedTopicId={selectedTopicId}
             setSelectedTopicId={setSelectedTopicId}
           />
-          <div className="flex-1 mt-8">
-            <Dialog open={moving} onOpenChange={setMoving}>
-              <DialogTrigger asChild>
-                <Button
-                  disabled={!selectedTopicId}
-                  className="mr-2"
-                  variant="outline"
-                  onClick={() => {}}
-                >
-                  Move to Parking Lot
-                </Button>
-              </DialogTrigger>
-              <ParkingDialog formId={movingFormId}>
-                {selectedTopic ? (
-                  <ParkingForm
-                    key={selectedTopicId}
-                    onOk={(payload) => {
-                      setParkingLots((lots) => [
-                        ...lots,
-                        { ...payload, uuid: uuidv4() },
-                      ]);
-                      setTopics((topics) =>
-                        topics.filter((t) => t.uuid !== selectedTopicId)
-                      );
-                      setSelectedTopicId(null);
-                      setMoving(false);
-                    }}
-                    name={selectedTopic.name}
-                    description={selectedTopic.description}
-                    formId={movingFormId}
-                  />
-                ) : null}
-              </ParkingDialog>
-            </Dialog>
-
-            <div className="flex justify-center gap-4 mt-8">
-              <Button onClick={() => goBack()} size="sm" variant="outline">
-                &lt;EDIT
-              </Button>
-              <Button
-                onClick={() => {
-                  clearTimer();
-                }}
-                size="sm"
-                variant="outline"
-              >
-                STOP
-              </Button>
-            </div>
-          </div>
+          <MeetingTableActions
+            selectedTopic={selectedTopic}
+            onMoveTopic={onMoveTopic}
+            goBack={goBack}
+            onStop={onStop}
+          />
         </div>
         <div className="flex flex-col gap-8">
-          <div>
-            <h2 className="font-bold mb-2">Notes</h2>
-            <div className="">
-              <Textarea
-                onChange={(e) => {
-                  setNotes(e.target.value);
-                }}
-                value={notes}
-                className="mb-2"
-                placeholder="Type your notes here."
-              />
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => {
-                    copyToClipboard(notes);
-                  }}
-                  className=""
-                  variant="outline"
-                >
-                  COPY
-                </Button>
-              </div>
-            </div>
-          </div>
-          <div className="">
-            <h2 className="font-bold mb-2">Parking Lot</h2>
-            <ScrollArea className="h-[300px] w-full rounded-md border mb-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="bg-blue-500 text-white">
-                      Topic
-                    </TableHead>
-                    <TableHead className="bg-blue-500 text-white">
-                      Description
-                    </TableHead>
-                    <TableHead className="bg-blue-500 text-white">
-                      Owners
-                    </TableHead>
-                    <TableHead className="bg-blue-500 text-white">
-                      Action
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {parkingLots.map((lot) => (
-                    <TableRow key={lot.uuid}>
-                      <TableCell className="font-medium">{lot.name}</TableCell>
-                      <TableCell>{lot.description}</TableCell>
-                      <TableCell>{lot.owners}</TableCell>
-
-                      <TableCell>
-                        <Button
-                          onClick={(log) => {
-                            setParkingLots(
-                              parkingLots.filter((t) => t.uuid !== lot.uuid)
-                            );
-                          }}
-                          variant="destructive"
-                          size="sm"
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-
-            <div className="flex justify-between">
-              <Dialog open={adding} onOpenChange={setAdding}>
-                <DialogTrigger asChild>
-                  <Button className="mr-2" variant="outline">
-                    ADD ITEM
-                  </Button>
-                </DialogTrigger>
-                <ParkingDialog formId={addingFormId}>
-                  <ParkingForm
-                    onOk={(payload) => {
-                      setParkingLots((lots) => [
-                        ...lots,
-                        { ...payload, uuid: uuidv4() },
-                      ]);
-                      setAdding(false);
-                    }}
-                    formId={addingFormId}
-                  />
-                </ParkingDialog>
-              </Dialog>
-
-              <Button
-                onClick={() => {
-                  // copy all parking lots text content to clipboard
-                  copyToClipboard(
-                    parkingLots
-                      .map(
-                        (lot) =>
-                          `${lot.name} - ${lot.description} - ${lot.owners}`
-                      )
-                      .join('\n')
-                  );
-                }}
-                variant="outline"
-              >
-                COPY
-              </Button>
-            </div>
-          </div>
+          <Notes />
+          <ParkingSection
+            parkingLots={parkingLots}
+            onAddParkingLot={onAddParkingLot}
+            onDeleteParkingLot={onDeleteParkingLot}
+          />
         </div>
       </div>
     </div>
