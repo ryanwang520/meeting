@@ -1,6 +1,7 @@
 'use client';
 import { v4 as uuidv4 } from 'uuid';
 import { useCopyToClipboard } from 'react-use';
+import { formatTime } from '@/lib/utils';
 
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import {
@@ -47,12 +48,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import ParkingDialog from '@/components/ParkingDialog';
 import ParkingForm from '@/components/ParkingForm';
+import MeetingTable from '@/components/MeetingTable';
+import { Topic, TopicForm, topicSchema } from '@/lib/types';
 
 const timeOptions = [1, 5, 10, 15, 20, 30, 60];
 
-type TopicForm = z.infer<typeof topicSchema>;
-
-type Topic = TopicForm & { uuid: string };
 type Status = 'setup' | 'meeting';
 
 // generate some test topic data
@@ -116,14 +116,6 @@ export default function App() {
     </div>
   );
 }
-
-const topicSchema = z.object({
-  name: z.string().min(1, {
-    message: 'Please enter a topic name.',
-  }),
-  description: z.string(),
-  time: z.string(),
-});
 
 type TopicFormData = z.infer<typeof topicSchema>;
 
@@ -318,24 +310,6 @@ type ParkingLot = {
   uuid: string;
 };
 
-function formatTime(totalSeconds: number) {
-  const hours = Math.floor(totalSeconds / 3600); // Compute total hours
-  const minutes = Math.floor((totalSeconds % 3600) / 60); // Compute remaining minutes
-  const seconds = totalSeconds % 60; // Compute remaining seconds
-
-  // Pad the minutes and seconds with leading zeros if needed
-  const paddedHours = String(hours).padStart(2, '0');
-  const paddedMinutes = String(minutes).padStart(2, '0');
-  const paddedSeconds = String(seconds.toFixed(0)).padStart(2, '0');
-
-  // Format the time string in hh:mm:ss format
-  if (hours > 0) {
-    const paddedHours = String(hours).padStart(2, '0');
-    return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
-  } else {
-    return `${paddedMinutes}:${paddedSeconds}`;
-  }
-}
 function Meeting({
   initialTopics,
   goBack,
@@ -384,45 +358,6 @@ function Meeting({
     };
   }, [participants, rate]);
 
-  function renderTopicStatus(topic: Topic) {
-    // assign topics with index less than this one to varialbe prevTopics
-    const prevTopics = topics.slice(0, topics.indexOf(topic));
-    const prevSeconds = prevTopics.reduce(
-      (acc, t) => acc + Number(t.time) * 60,
-      0
-    );
-    const topicEndSeconds = prevSeconds + Number(topic.time) * 60;
-    if (prevSeconds > seconds) {
-      return '';
-    }
-    if (topicEndSeconds < seconds) {
-      return 'Done';
-    }
-    const countdownSeconds = topicEndSeconds - seconds;
-    function applyStyle(seconds: number) {
-      if (seconds < 60) {
-        return { backgroundColor: '#ea3323', color: 'white' };
-      }
-      if (seconds < 60 * 3) {
-        return { backgroundColor: '#ffff54', color: 'black' };
-      }
-      return {};
-    }
-    return (
-      <TableCell className="" style={applyStyle(countdownSeconds)}>
-        {formatTime(countdownSeconds)}
-      </TableCell>
-    );
-  }
-  function isStarted(topic: Topic) {
-    const prevTopics = topics.slice(0, topics.indexOf(topic));
-    const prevSeconds = prevTopics.reduce(
-      (acc, t) => acc + Number(t.time) * 60,
-      0
-    );
-    return seconds > prevSeconds;
-  }
-
   return (
     <div>
       <div
@@ -450,40 +385,12 @@ function Meeting({
               </div>
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead />
-                <TableHead>Name</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Clock</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {topics.map((topic) => (
-                <TableRow key={topic.uuid}>
-                  <TableCell>
-                    <Checkbox
-                      disabled={isStarted(topic)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedTopicId(topic.uuid);
-                        } else {
-                          setSelectedTopicId(null);
-                        }
-                      }}
-                      checked={selectedTopicId === topic.uuid}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{topic.name}</TableCell>
-                  <TableCell>{topic.time} minutes</TableCell>
-                  <TableCell>{topic.description}</TableCell>
-                  {renderTopicStatus(topic)}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <MeetingTable
+            topics={topics}
+            seconds={seconds}
+            selectedTopicId={selectedTopicId}
+            setSelectedTopicId={setSelectedTopicId}
+          />
           <div className="flex-1 mt-8">
             <Dialog open={moving} onOpenChange={setMoving}>
               <DialogTrigger asChild>
