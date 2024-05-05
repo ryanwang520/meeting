@@ -72,7 +72,7 @@ export default function MeetingTable({
       </TableHeader>
       <TableBody>
         {topics.map((topic) => (
-          <TableRow key={topic.uuid}>
+          <TableRow key={topic.uuid} className="h-16">
             <TableCell>
               <Checkbox
                 disabled={isStarted(topic)}
