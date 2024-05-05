@@ -37,6 +37,7 @@ import {
 import {
   Dispatch,
   SetStateAction,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -48,14 +49,6 @@ import ParkingDialog from '@/components/ParkingDialog';
 import ParkingForm from '@/components/ParkingForm';
 
 const timeOptions = [1, 5, 10, 15, 20, 30, 60];
-
-const topicSchema = z.object({
-  name: z.string().min(1, {
-    message: 'Please enter a topic name.',
-  }),
-  description: z.string(),
-  time: z.string(),
-});
 
 type TopicForm = z.infer<typeof topicSchema>;
 
@@ -89,13 +82,21 @@ export default function App() {
   const [participants, setParticipants] = useState<number>(1);
   const [rate, setRate] = useState<number>(100);
 
+  const onAddTopic = useCallback((topic: TopicFormData) => {
+    setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
+  }, []);
+  const onDeleteTopic = useCallback((topic: Topic) => {
+    setTopics((topics) => topics.filter((t) => t.uuid !== topic.uuid));
+  }, []);
+
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">ArcSite Meeting App</h1>
       {status == 'setup' ? (
         <Prepare
           topics={topics}
-          setTopics={setTopics}
+          onAddTopic={onAddTopic}
+          onDeleteTopic={onDeleteTopic}
           startMeeting={({ participants, rate }) => {
             setParticipants(participants);
             setRate(rate);
@@ -116,13 +117,25 @@ export default function App() {
   );
 }
 
+const topicSchema = z.object({
+  name: z.string().min(1, {
+    message: 'Please enter a topic name.',
+  }),
+  description: z.string(),
+  time: z.string(),
+});
+
+type TopicFormData = z.infer<typeof topicSchema>;
+
 function Prepare({
   topics,
-  setTopics,
+  onAddTopic,
+  onDeleteTopic,
   startMeeting,
 }: {
   topics: Topic[];
-  setTopics: Dispatch<SetStateAction<Topic[]>>;
+  onAddTopic: (topic: TopicFormData) => void;
+  onDeleteTopic: (topic: Topic) => void;
   startMeeting: (params: { participants: number; rate: number }) => void;
 }) {
   const form = useForm<TopicForm>({
@@ -134,8 +147,8 @@ function Prepare({
     },
   });
   // 2. Define a submit handler.
-  function onSubmit(topic: z.infer<typeof topicSchema>) {
-    setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
+  function onSubmit(topic: TopicFormData) {
+    onAddTopic(topic);
     form.reset();
   }
   const settingsForm = useRef<HTMLFormElement | null>(null);
@@ -280,9 +293,7 @@ function Prepare({
                     <TableCell>
                       <Button
                         onClick={() => {
-                          setTopics(
-                            topics.filter((t) => t.uuid !== topic.uuid)
-                          );
+                          onDeleteTopic(topic);
                         }}
                         variant="destructive"
                       >
