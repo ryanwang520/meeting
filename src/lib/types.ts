@@ -28,3 +28,5 @@ export const parkintLotSchema = z.object({
 });
 
 export type ParkingLotFormData = z.infer<typeof parkintLotSchema>;
+
+export type TopicFormData = z.infer<typeof topicSchema>;
