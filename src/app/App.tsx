@@ -2,15 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { useCopyToClipboard } from 'react-use';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import {
   SelectValue,
   SelectTrigger,
@@ -23,13 +15,11 @@ import { Input } from '@/components/ui/input';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Textarea } from '@/components/ui/textarea';
-import Link from 'next/link';
 
 import { useForm } from 'react-hook-form';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -49,13 +39,13 @@ import {
   SetStateAction,
   useEffect,
   useId,
-  useReducer,
   useRef,
   useState,
 } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DialogClose } from '@radix-ui/react-dialog';
+import ParkingDialog from '@/components/ParkingDialog';
+import ParkingForm from '@/components/ParkingForm';
 
 const timeOptions = [1, 5, 10, 15, 20, 30, 60];
 
@@ -109,7 +99,6 @@ export default function App() {
           startMeeting={({ participants, rate }) => {
             setParticipants(participants);
             setRate(rate);
-            console.log(participants, rate);
             setStatus('meeting');
           }}
         />
@@ -648,128 +637,5 @@ function Meeting({
         </div>
       </div>
     </div>
-  );
-}
-
-const parkintLotSchema = z.object({
-  name: z.string().min(1, {
-    message: 'Please enter a topic name.',
-  }),
-  description: z.string(),
-  owners: z.string().min(1, {
-    message: 'Please enter at least one owner.',
-  }),
-});
-
-function ParkingForm({
-  formId,
-  name,
-  description,
-  onOk,
-}: {
-  formId: string;
-  name?: string;
-  description?: string;
-  onOk(form: z.infer<typeof parkintLotSchema>): void;
-}) {
-  const form = useForm<z.infer<typeof parkintLotSchema>>({
-    resolver: zodResolver(parkintLotSchema),
-    defaultValues: {
-      name,
-      description,
-      owners: '',
-    },
-  });
-  // 2. Define a submit handler.
-  function onSubmit(payload: z.infer<typeof parkintLotSchema>) {
-    // setTopics((topics) => [...topics, { ...topic, uuid: uuidv4() }]);
-    onOk(payload);
-    form.reset();
-  }
-  useEffect(() => {
-    console.log('mount');
-  }, []);
-  return (
-    <Form {...form}>
-      <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4">
-          <FormField
-            name="name"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="">
-                <div className="flex items-baseline">
-                  <FormLabel className="w-32">Topic:</FormLabel>
-                  <div className="w-full">
-                    <FormControl>
-                      <Input placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </div>
-                </div>
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="description"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="flex items-baseline">
-                <FormLabel className="w-32 break-words whitespace-normal">
-                  Description (optional):
-                </FormLabel>
-                <FormControl>
-                  <Textarea placeholder="" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="owners"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="">
-                <div className="flex items-baseline">
-                  <FormLabel className="w-32">Owners:</FormLabel>
-                  <div className="w-full">
-                    <FormControl>
-                      <Input placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </div>
-                </div>
-              </FormItem>
-            )}
-          />
-        </div>
-      </form>
-    </Form>
-  );
-}
-
-function ParkingDialog({
-  children,
-  formId,
-}: {
-  children: React.ReactNode;
-  formId: string;
-}) {
-  return (
-    <DialogContent className="sm:max-w-[425px]">
-      <DialogHeader>
-        <DialogTitle>Add to Parking Lot</DialogTitle>
-      </DialogHeader>
-
-      <div className="grid gap-4 py-4">{children}</div>
-      <DialogFooter>
-        <DialogClose asChild>
-          <Button variant={'outline'}>Cancel</Button>
-        </DialogClose>
-        <Button form={formId} type="submit">
-          Save changes
-        </Button>
-      </DialogFooter>
-    </DialogContent>
   );
 }
